@@ -32,10 +32,10 @@ export default function MinecraftServerWebsite() {
   const statusHost = encodeURIComponent(trackerHost.trim().toLowerCase());
 
   const [serverData, setServerData] = useState({
-    online: null as boolean | null,
+    online: null,
     playersOnline: 0,
     maxPlayers: 0,
-    playerList: [] as string[],
+    playerList: [],
     version: "1.21.11 Java",
     motd: "Checking server status...",
     checkedWith: "mcsrvstat.us",
@@ -72,7 +72,7 @@ export default function MinecraftServerWebsite() {
           : [];
 
         const playerList = rawPlayers
-          .map((player: any) => {
+          .map((player) => {
             if (typeof player === "string") return player;
             if (player && typeof player === "object") {
               if (typeof player.name === "string") return player.name;
@@ -80,7 +80,7 @@ export default function MinecraftServerWebsite() {
             }
             return null;
           })
-          .filter((name: string | null): name is string => Boolean(name));
+          .filter(Boolean);
 
         const cleanMotd = Array.isArray(data.motd?.clean)
           ? data.motd.clean.join(" ")
