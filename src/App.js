@@ -21,27 +21,26 @@ export default function MinecraftServerWebsite() {
 
   const staff = [
     { name: "Leonbeonbus", role: "Owner" },
-    { name: "Skyampify", role: "Admin" },
-    { name: "Infamous", role: "Admin" },
+    { name: "Skyampify", role: "Mod" },
+    { name: "Infamous", role: "Mod" },
     { name: "JustTom", role: "Admin" },
     { name: "Koii", role: "Admin" },
   ];
 
-  const serverIp = "BucksSMP.aternos.me";
-  const trackerHost = "numbat.aternos.host:31753";
+  const serverIp = "BucksSMP.mcserver.us";
+  const trackerHost = "169.155.122.154:9100";
   const statusHost = encodeURIComponent(trackerHost.trim().toLowerCase());
 
   const [serverData, setServerData] = useState({
-    online: null,
+    online: null as boolean | null,
     playersOnline: 0,
     maxPlayers: 0,
-    playerList: [],
+    playerList: [] as string[],
     version: "1.21.11 Java",
     motd: "Checking server status...",
     checkedWith: "mcsrvstat.us",
     copyMessage: "",
     lastUpdated: "",
-    
   });
 
   useEffect(() => {
@@ -51,7 +50,6 @@ export default function MinecraftServerWebsite() {
       try {
         const response = await fetch(`https://api.mcsrvstat.us/3/${statusHost}`, {
           cache: "no-store",
-          headers: { Accept: "application/json" },
         });
 
         if (!response.ok) {
@@ -74,7 +72,7 @@ export default function MinecraftServerWebsite() {
           : [];
 
         const playerList = rawPlayers
-          .map((player) => {
+          .map((player: any) => {
             if (typeof player === "string") return player;
             if (player && typeof player === "object") {
               if (typeof player.name === "string") return player.name;
@@ -82,7 +80,7 @@ export default function MinecraftServerWebsite() {
             }
             return null;
           })
-          .filter((playerName) => typeof playerName === "string");
+          .filter((name: string | null): name is string => Boolean(name));
 
         const cleanMotd = Array.isArray(data.motd?.clean)
           ? data.motd.clean.join(" ")
@@ -96,15 +94,14 @@ export default function MinecraftServerWebsite() {
           playersOnline,
           maxPlayers,
           playerList,
-          version: data.version || "1.21.11 Java",
-          motd: cleanMotd || (isOnline ? "Server is online right now!" : "Server is offline right now."),
+          version: "1.21.11 Java",
+          motd: cleanMotd || (isOnline ? "Server is active right now!" : "Server is sleeping right now."),
           checkedWith: "mcsrvstat.us",
           lastUpdated: now.toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
             second: "2-digit",
           }),
-          
         }));
       } catch {
         if (!active) return;
@@ -123,7 +120,6 @@ export default function MinecraftServerWebsite() {
             minute: "2-digit",
             second: "2-digit",
           }),
-          
         }));
       }
     }
@@ -138,8 +134,11 @@ export default function MinecraftServerWebsite() {
   }, [statusHost]);
 
   async function copyIp() {
-    const fallbackCopy = () => {
-      try {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(serverIp);
+        setServerData((prev) => ({ ...prev, copyMessage: "Server IP copied!" }));
+      } else {
         const input = document.createElement("input");
         input.value = serverIp;
         document.body.appendChild(input);
@@ -147,26 +146,17 @@ export default function MinecraftServerWebsite() {
         document.execCommand("copy");
         document.body.removeChild(input);
         setServerData((prev) => ({ ...prev, copyMessage: "Server IP copied!" }));
-      } catch {
-        setServerData((prev) => ({ ...prev, copyMessage: `Copy this IP: ${serverIp}` }));
-      }
-    };
-
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(serverIp);
-        setServerData((prev) => ({ ...prev, copyMessage: "Server IP copied!" }));
-      } else {
-        fallbackCopy();
       }
     } catch {
-      fallbackCopy();
+      setServerData((prev) => ({ ...prev, copyMessage: `Copy this IP: ${serverIp}` }));
     }
 
     window.setTimeout(() => {
       setServerData((prev) => ({ ...prev, copyMessage: "" }));
     }, 2500);
   }
+
+  const ownerOnline = serverData.playerList.includes("Leonbeonbus");
 
   return (
     <div className="min-h-screen bg-sky-50 text-slate-900">
@@ -182,7 +172,7 @@ export default function MinecraftServerWebsite() {
                 Welcome to <span className="text-orange-500">Bucks</span><span className="text-sky-500">SMP</span>
               </h1>
               <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-                BucksSMP is a friendly Minecraft survival server where you can build cool things, make new friends, and enjoy a chill community with helpful staff.
+                BucksSMP is a PvP SMP server built for competition, custom spawn fights, and a fun community with quality-of-life plugins.
               </p>
               <div className="mt-8 flex flex-wrap gap-4">
                 <a
@@ -191,12 +181,25 @@ export default function MinecraftServerWebsite() {
                 >
                   Meet the Staff
                 </a>
+
                 <button
                   onClick={copyIp}
                   className="rounded-2xl border border-sky-200 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-sky-50"
                 >
                   Copy Server IP
                 </button>
+
+                <a
+                  href="https://discord.gg/dW8XjXbsG9"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-2xl bg-indigo-500 px-5 py-3 font-semibold text-white shadow-lg transition hover:scale-[1.02]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.317 4.369A19.791 19.791 0 0016.885 3c-.161.287-.349.67-.478.969a18.27 18.27 0 00-4.814 0c-.129-.3-.317-.682-.479-.969a19.736 19.736 0 00-3.432 1.369C3.533 8.246 2.97 12.028 3.254 15.757a19.9 19.9 0 005.993 3.044c.482-.66.912-1.355 1.282-2.083-.705-.267-1.377-.596-2.006-.98.168-.124.332-.252.491-.384 3.87 1.82 8.07 1.82 11.893 0 .16.132.324.26.492.384-.63.384-1.302.713-2.007.98.37.728.8 1.423 1.282 2.083a19.877 19.877 0 005.993-3.044c.333-4.298-.568-8.046-2.937-11.388zM9.545 13.545c-1.183 0-2.155-1.085-2.155-2.418 0-1.333.951-2.418 2.155-2.418 1.214 0 2.166 1.095 2.155 2.418 0 1.333-.951 2.418-2.155 2.418zm4.91 0c-1.183 0-2.155-1.085-2.155-2.418 0-1.333.951-2.418 2.155-2.418 1.214 0 2.166 1.095 2.155 2.418 0 1.333-.941 2.418-2.155 2.418z"/>
+                  </svg>
+                  Discord
+                </a>
               </div>
               <div className="mt-6 rounded-3xl border border-orange-100 bg-white/85 p-5 shadow-lg shadow-orange-100/60">
                 <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Server IP</p>
@@ -248,11 +251,12 @@ export default function MinecraftServerWebsite() {
                 <div className="rounded-2xl border border-orange-100 bg-orange-50 p-5">
                   <p className="text-sm text-slate-500">Owner</p>
                   <p className="mt-2 text-2xl font-bold text-orange-600">
-                    {serverData.playerList.includes("Leonbeonbus") ? "Owner on" : "Owner offline"}
+                    {ownerOnline ? "Owner on" : "Owner offline"}
                   </p>
                 </div>
               </div>
-            <div className="mt-4 rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 to-sky-50 p-5">
+
+              <div className="mt-4 rounded-2xl border border-orange-100 bg-gradient-to-r from-orange-50 to-sky-50 p-5">
                 <p className="text-sm text-slate-500">Server message</p>
                 <p className="mt-2 text-lg font-semibold text-slate-800">{serverData.motd}</p>
                 <p className="mt-2 text-sm text-slate-500">
@@ -283,7 +287,7 @@ export default function MinecraftServerWebsite() {
                           key={`${player}-${index}`}
                           className="flex items-center justify-between rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3"
                         >
-                          <span className="font-semibold text-slate-800">{String(player)}</span>
+                          <span className="font-semibold text-slate-800">{player}</span>
                           <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-700">
                             #{index + 1}
                           </span>
